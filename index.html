@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Can I Drone?</title>
+    <meta name="description" content="Comprueba si puedes volar tu dron en Espa&ntilde;a. Informaci&oacute;n de ENAIRE, meteorolog&iacute;a y restricciones en tiempo real.">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <style>
+        :root {
+            --green: #22c55e;
+            --yellow: #eab308;
+            --red: #ef4444;
+            --orange: #f97316;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --card-border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        .header {
+            text-align: center;
+            padding: 1.5rem 1rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header h1 span { color: var(--accent); }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* --- VERDICT BANNER --- */
+        .verdict-banner {
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            transition: all 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .verdict-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .verdict-banner > * { position: relative; z-index: 1; }
+
+        .verdict-banner.loading {
+            background: var(--card);
+            border: 2px solid var(--card-border);
+        }
+
+        .verdict-banner.yes {
+            background: linear-gradient(135deg, #064e3b, #065f46);
+            border: 2px solid var(--green);
+        }
+
+        .verdict-banner.caution {
+            background: linear-gradient(135deg, #713f12, #854d0e);
+            border: 2px solid var(--yellow);
+        }
+
+        .verdict-banner.no {
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            border: 2px solid var(--red);
+        }
+
+        .verdict-icon {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .verdict-text {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .verdict-sub {
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .verdict-banner.yes .verdict-text { color: var(--green); }
+        .verdict-banner.caution .verdict-text { color: var(--yellow); }
+        .verdict-banner.no .verdict-text { color: var(--red); }
+
+        /* --- SPINNER --- */
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--card-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 0.75rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* --- RESTRICTIONS LIST --- */
+        .restriction-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .restriction-item:last-child { border-bottom: none; }
+
+        .restriction-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+
+        .restriction-dot.red { background: var(--red); }
+        .restriction-dot.yellow { background: var(--yellow); }
+        .restriction-dot.orange { background: var(--orange); }
+        .restriction-dot.green { background: var(--green); }
+
+        .restriction-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .restriction-detail {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        /* --- WEATHER GRID --- */
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .weather-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .weather-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .weather-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.15rem;
+        }
+
+        .weather-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 0.3rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .weather-status.ok { background: rgba(34,197,94,0.2); color: var(--green); }
+        .weather-status.warn { background: rgba(234,179,8,0.2); color: var(--yellow); }
+        .weather-status.bad { background: rgba(239,68,68,0.2); color: var(--red); }
+
+        /* --- MAP --- */
+        #map {
+            height: 350px;
+            border-radius: 12px;
+            z-index: 0;
+        }
+
+        /* --- DAYLIGHT --- */
+        .daylight-bar {
+            height: 8px;
+            background: var(--card-border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .daylight-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .daylight-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* --- LOCATION INFO --- */
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .location-info strong { color: var(--text); }
+
+        /* --- BUTTON --- */
+        .refresh-btn {
+            display: block;
+            width: 100%;
+            padding: 0.85rem;
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .refresh-btn:hover { opacity: 0.85; }
+        .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--card-border);
+            margin-top: 1rem;
+        }
+
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        /* --- LEGEND --- */
+        .map-legend {
+            background: rgba(15,23,42,0.92);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            line-height: 1.6;
+            border: 1px solid var(--card-border);
+            color: var(--text);
+        }
+
+        .map-legend b { display: block; margin-bottom: 4px; font-size: 0.75rem; }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-swatch {
+            width: 12px; height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        /* --- ERROR --- */
+        .error-box {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid var(--red);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            color: var(--red);
+        }
+
+        .error-box p { margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); }
+
+        /* --- TIMESTAMP --- */
+        .timestamp {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Can I <span>Drone</span>?</h1>
+    <p>Comprueba al instante si puedes volar tu dron en Espa&ntilde;a</p>
+</div>
+
+<div class="main-container">
+    <!-- Verdict -->
+    <div id="verdict" class="verdict-banner loading">
+        <div class="spinner"></div>
+        <div class="verdict-text">Analizando tu ubicaci&oacute;n...</div>
+        <div class="verdict-sub">Obteniendo GPS, consultando ENAIRE y meteorolog&iacute;a</div>
+    </div>
+
+    <!-- Timestamp -->
+    <div id="timestamp" class="timestamp" style="display:none;"></div>
+
+    <!-- Location -->
+    <div id="locationInfo" class="location-info" style="display:none;"></div>
+
+    <!-- Restrictions -->
+    <div id="restrictionsCard" class="card" style="display:none;">
+        <div class="card-title">Restricciones de espacio a&eacute;reo (ENAIRE)</div>
+        <div id="restrictionsList"></div>
+    </div>
+
+    <!-- Weather -->
+    <div id="weatherCard" class="card" style="display:none;">
+        <div class="card-title">Condiciones meteorol&oacute;gicas</div>
+        <div id="weatherGrid" class="weather-grid"></div>
+    </div>
+
+    <!-- Daylight -->
+    <div id="daylightCard" class="card" style="display:none;">
+        <div class="card-title">Luz solar</div>
+        <div id="daylightContent"></div>
+    </div>
+
+    <!-- Map -->
+    <div id="mapCard" class="card" style="display:none;">
+        <div class="card-title">Mapa de restricciones</div>
+        <div id="map"></div>
+    </div>
+
+    <!-- Refresh -->
+    <button id="refreshBtn" class="refresh-btn" onclick="startCheck()" disabled>
+        Actualizar
+    </button>
+
+    <div class="footer">
+        Datos de <a href="https://drones.enaire.es" target="_blank" rel="noopener">ENAIRE Drones</a>
+        y <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.
+        Esta app es orientativa y no sustituye la consulta oficial.
+        <br>Vuela siempre cumpliendo la normativa de <a href="https://www.seguridadaerea.gob.es/es/ambitos/drones" target="_blank" rel="noopener">AESA</a>.
+    </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG: ENAIRE ArcGIS REST service URLs
+// ============================================================
+const ENAIRE_LAYERS = [
+    {
+        name: 'Espacio a\u00e9reo controlado / FIZ',
+        url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Aero_V3/MapServer/1',
+        color: '#ef4444',
+        fillColor: '#ef4444',
+        severity: 'red',
+        type: 'controlled'
+    },
+    {
+        name: 'Avisos',
+        url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Aero_V3/MapServer/2',
+        color: '#f97316',
+        fillColor: '#f97316',
+        severity: 'orange',
+        type: 'warning'
+    },
+    {
+        name: 'Zonas restringidas',
+        url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Aero_V3/MapServer/10',
+        color: '#ef4444',
+        fillColor: '#ef4444',
+        severity: 'red',
+        type: 'restricted'
+    },
+    {
+        name: 'Entorno aeroportuario',
+        url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Aero_V3/MapServer/6',
+        color: '#dc2626',
+        fillColor: '#dc2626',
+        severity: 'red',
+        type: 'airport'
+    },
+    {
+        name: 'Infraestructuras cr\u00edticas',
+        url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Infra_V0/MapServer/11',
+        color: '#f59e0b',
+        fillColor: '#f59e0b',
+        severity: 'yellow',
+        type: 'infrastructure'
+    },
+    {
+        name: 'NOTAM',
+        url: 'https://servais.enaire.es/insignias/rest/services/NOTAM/NOTAM_UAS_APP_V3/MapServer/1',
+        color: '#a855f7',
+        fillColor: '#a855f7',
+        severity: 'orange',
+        type: 'notam'
+    }
+];
+
+let map = null;
+let userMarker = null;
+let zoneLayers = [];
+
+// ============================================================
+// GEOLOCATION
+// ============================================================
+function getPosition() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('Tu navegador no soporta geolocalizaci\u00f3n'));
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+            err => {
+                if (err.code === 1) reject(new Error('Permiso de ubicaci\u00f3n denegado. Activa la geolocalizaci\u00f3n.'));
+                else if (err.code === 2) reject(new Error('No se pudo determinar tu ubicaci\u00f3n.'));
+                else reject(new Error('Tiempo de espera agotado. Int\u00e9ntalo de nuevo.'));
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+        );
+    });
+}
+
+// ============================================================
+// ENAIRE ArcGIS QUERY
+// ============================================================
+async function queryENAIRELayer(layer, lat, lng) {
+    // Convert lat/lng to Web Mercator for spatial query
+    const x = lng * 20037508.34 / 180;
+    const y = Math.log(Math.tan((90 + lat) * Math.PI / 360)) / (Math.PI / 180) * 20037508.34 / 180;
+
+    const params = new URLSearchParams({
+        geometry: JSON.stringify({ x, y, spatialReference: { wkid: 102100 } }),
+        geometryType: 'esriGeometryPoint',
+        spatialRel: 'esriSpatialRelIntersects',
+        outFields: '*',
+        returnGeometry: 'true',
+        outSR: '4326',
+        f: 'json'
+    });
+
+    const resp = await fetch(`${layer.url}/query?${params.toString()}`);
+    if (!resp.ok) throw new Error(`ENAIRE query failed: ${resp.status}`);
+    const data = await resp.json();
+    return data.features || [];
+}
+
+async function queryAllENAIRE(lat, lng) {
+    const results = [];
+    const promises = ENAIRE_LAYERS.map(async (layer) => {
+        try {
+            const features = await queryENAIRELayer(layer, lat, lng);
+            features.forEach(f => {
+                results.push({
+                    layer: layer.name,
+                    severity: layer.severity,
+                    type: layer.type,
+                    color: layer.color,
+                    fillColor: layer.fillColor,
+                    attributes: f.attributes,
+                    geometry: f.geometry
+                });
+            });
+        } catch (e) {
+            console.warn(`Error querying ${layer.name}:`, e);
+        }
+    });
+    await Promise.all(promises);
+    return results;
+}
+
+// ============================================================
+// WEATHER (Open-Meteo)
+// ============================================================
+async function getWeather(lat, lng) {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_gusts_10m,precipitation,visibility,weather_code,cloud_cover&daily=sunrise,sunset&timezone=Europe%2FMadrid&forecast_days=1`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('Weather API failed');
+    return await resp.json();
+}
+
+// ============================================================
+// WEATHER EVALUATION
+// ============================================================
+function evaluateWeather(weather) {
+    const c = weather.current;
+    const checks = [];
+
+    // Wind
+    const wind = c.wind_speed_10m;
+    const gusts = c.wind_gusts_10m;
+    let windStatus = 'ok', windNote = 'Viento aceptable';
+    if (wind > 40 || gusts > 50) { windStatus = 'bad'; windNote = 'Viento peligroso para vuelo'; }
+    else if (wind > 25 || gusts > 35) { windStatus = 'warn'; windNote = 'Viento fuerte, precauci\u00f3n'; }
+    checks.push({ label: 'Viento', value: `${wind} km/h`, sub: `Rachas: ${gusts} km/h`, status: windStatus, note: windNote });
+
+    // Precipitation
+    const precip = c.precipitation;
+    let precipStatus = 'ok', precipNote = 'Sin precipitaci\u00f3n';
+    if (precip > 2) { precipStatus = 'bad'; precipNote = 'Lluvia activa, no volar'; }
+    else if (precip > 0) { precipStatus = 'warn'; precipNote = 'Precipitaci\u00f3n ligera'; }
+    checks.push({ label: 'Precipitaci\u00f3n', value: `${precip} mm`, status: precipStatus, note: precipNote });
+
+    // Visibility
+    const vis = c.visibility;
+    const visKm = (vis / 1000).toFixed(1);
+    let visStatus = 'ok', visNote = 'Buena visibilidad';
+    if (vis < 1000) { visStatus = 'bad'; visNote = 'Visibilidad insuficiente (<1 km)'; }
+    else if (vis < 3000) { visStatus = 'warn'; visNote = 'Visibilidad reducida'; }
+    checks.push({ label: 'Visibilidad', value: `${visKm} km`, status: visStatus, note: visNote });
+
+    // Cloud cover
+    const clouds = c.cloud_cover;
+    let cloudStatus = 'ok', cloudNote = 'Cielo despejado/parcial';
+    if (clouds > 90) { cloudStatus = 'warn'; cloudNote = 'Cielo cubierto'; }
+    checks.push({ label: 'Nubosidad', value: `${clouds}%`, status: cloudStatus, note: cloudNote });
+
+    // Temperature
+    const temp = c.temperature_2m;
+    let tempStatus = 'ok', tempNote = 'Temperatura aceptable';
+    if (temp < 0) { tempStatus = 'warn'; tempNote = 'Riesgo de hielo en bater\u00edas'; }
+    else if (temp > 40) { tempStatus = 'warn'; tempNote = 'Calor extremo, bater\u00edas'; }
+    checks.push({ label: 'Temperatura', value: `${temp}\u00b0C`, status: tempStatus, note: tempNote });
+
+    // Humidity
+    const hum = c.relative_humidity_2m;
+    let humStatus = 'ok', humNote = 'Humedad normal';
+    if (hum > 90) { humStatus = 'warn'; humNote = 'Humedad muy alta'; }
+    checks.push({ label: 'Humedad', value: `${hum}%`, status: humStatus, note: humNote });
+
+    return checks;
+}
+
+// ============================================================
+// DAYLIGHT CHECK
+// ============================================================
+function evaluateDaylight(weather) {
+    const sunrise = new Date(weather.daily.sunrise[0]);
+    const sunset = new Date(weather.daily.sunset[0]);
+    const now = new Date();
+
+    const isDaylight = now >= sunrise && now <= sunset;
+    const sunriseStr = sunrise.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const sunsetStr = sunset.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+    // Minutes until sunset or since sunset
+    let minutesToSunset = null;
+    let minutesSinceSunset = null;
+    if (isDaylight) {
+        minutesToSunset = Math.round((sunset - now) / 60000);
+    } else {
+        minutesSinceSunset = Math.round((now - sunset) / 60000);
+    }
+
+    // Progress through daylight
+    const totalDaylight = sunset - sunrise;
+    const elapsed = now - sunrise;
+    const progress = Math.max(0, Math.min(100, (elapsed / totalDaylight) * 100));
+
+    return { isDaylight, sunrise: sunriseStr, sunset: sunsetStr, progress, minutesToSunset, minutesSinceSunset };
+}
+
+// ============================================================
+// INTERPRET RESTRICTION
+// ============================================================
+function describeRestriction(result) {
+    const a = result.attributes;
+    let name = a.NAME_TXT || a.IDENT_TXT || a.name || a.FULLNAME || result.layer;
+    let detail = '';
+
+    // Try to get the simplified Spanish remarks
+    if (a.REMARKS_TXT_S && a.REMARKS_TXT_S.trim()) {
+        detail = a.REMARKS_TXT_S;
+    } else if (a.REMARKS_TXT && a.REMARKS_TXT.trim()) {
+        detail = a.REMARKS_TXT;
+    } else if (a.DESCRIPTION && a.DESCRIPTION.trim()) {
+        detail = a.DESCRIPTION;
+    }
+
+    // Clean HTML tags
+    detail = detail.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Height info
+    let height = '';
+    if (a.RESTRICCION_LOWER !== undefined && a.RESTRICCION_LOWER !== null) {
+        height = `Restricci\u00f3n desde ${a.RESTRICCION_LOWER}m`;
+        if (a.RESTRICCION_UPPER !== undefined && a.RESTRICCION_UPPER !== null) {
+            height += ` hasta ${a.RESTRICCION_UPPER}m`;
+        }
+    } else if (a.LOWER_VAL !== undefined && a.LOWER_VAL !== null) {
+        height = `Desde ${a.LOWER_VAL}m`;
+        if (a.UPPER_VAL !== undefined && a.UPPER_VAL !== null) {
+            height += ` hasta ${a.UPPER_VAL}m`;
+        }
+    }
+
+    // Contact
+    let contact = a.CONTACTO || '';
+
+    // NOTAM dates
+    let dates = '';
+    if (a.INITIAL_DATE) {
+        const from = new Date(a.INITIAL_DATE).toLocaleDateString('es-ES');
+        const to = a.END_DATE ? new Date(a.END_DATE).toLocaleDateString('es-ES') : 'indefinido';
+        dates = `Vigente: ${from} - ${to}`;
+    }
+
+    return { name, detail, height, contact, dates, severity: result.severity, layerName: result.layer };
+}
+
+// ============================================================
+// OVERALL VERDICT
+// ============================================================
+function computeVerdict(restrictions, weatherChecks, daylight) {
+    let level = 'yes'; // green
+    const reasons = [];
+
+    // Check restrictions
+    const hasRed = restrictions.some(r => r.severity === 'red');
+    const hasOrange = restrictions.some(r => r.severity === 'orange');
+    const hasYellow = restrictions.some(r => r.severity === 'yellow');
+
+    if (hasRed) {
+        level = 'no';
+        reasons.push('Te encuentras en una zona con restricciones severas de espacio a\u00e9reo');
+    } else if (hasOrange) {
+        if (level !== 'no') level = 'caution';
+        reasons.push('Existen avisos o NOTAMs activos en tu zona');
+    } else if (hasYellow) {
+        if (level !== 'no') level = 'caution';
+        reasons.push('Hay restricciones parciales en tu zona');
+    }
+
+    // Check weather
+    const hasBadWeather = weatherChecks.some(c => c.status === 'bad');
+    const hasWarnWeather = weatherChecks.some(c => c.status === 'warn');
+
+    if (hasBadWeather) {
+        level = 'no';
+        const badOnes = weatherChecks.filter(c => c.status === 'bad').map(c => c.note);
+        reasons.push(...badOnes);
+    } else if (hasWarnWeather && level !== 'no') {
+        if (level === 'yes') level = 'caution';
+        const warnOnes = weatherChecks.filter(c => c.status === 'warn').map(c => c.note);
+        reasons.push(...warnOnes);
+    }
+
+    // Check daylight
+    if (!daylight.isDaylight) {
+        level = 'no';
+        reasons.push('Es de noche. Solo se permite vuelo nocturno con autorizaci\u00f3n espec\u00edfica');
+    } else if (daylight.minutesToSunset !== null && daylight.minutesToSunset < 30) {
+        if (level === 'yes') level = 'caution';
+        reasons.push(`Atardecer en ${daylight.minutesToSunset} minutos`);
+    }
+
+    return { level, reasons };
+}
+
+// ============================================================
+// MAP RENDERING
+// ============================================================
+function initMap(lat, lng) {
+    if (map) {
+        map.setView([lat, lng], 13);
+        if (userMarker) userMarker.setLatLng([lat, lng]);
+        else userMarker = L.circleMarker([lat, lng], { radius: 8, color: '#38bdf8', fillColor: '#38bdf8', fillOpacity: 1, weight: 2 }).addTo(map);
+        return;
+    }
+
+    map = L.map('map', {
+        center: [lat, lng],
+        zoom: 13,
+        zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+        maxZoom: 19
+    }).addTo(map);
+
+    userMarker = L.circleMarker([lat, lng], {
+        radius: 8,
+        color: '#38bdf8',
+        fillColor: '#38bdf8',
+        fillOpacity: 1,
+        weight: 2
+    }).addTo(map).bindPopup('Tu ubicaci\u00f3n').openPopup();
+
+    // Legend
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = `
+            <b>Leyenda</b>
+            <div class="legend-row"><div class="legend-swatch" style="background:#ef4444"></div> Zona restringida / EAC</div>
+            <div class="legend-row"><div class="legend-swatch" style="background:#dc2626"></div> Entorno aeroportuario</div>
+            <div class="legend-row"><div class="legend-swatch" style="background:#f97316"></div> Avisos</div>
+            <div class="legend-row"><div class="legend-swatch" style="background:#f59e0b"></div> Infraestructuras</div>
+            <div class="legend-row"><div class="legend-swatch" style="background:#a855f7"></div> NOTAM</div>
+            <div class="legend-row"><div class="legend-swatch" style="background:#38bdf8;border-radius:50%"></div> Tu posici&oacute;n</div>
+        `;
+        return div;
+    };
+    legend.addTo(map);
+}
+
+function renderZonesOnMap(restrictions) {
+    // Remove old layers
+    zoneLayers.forEach(l => map.removeLayer(l));
+    zoneLayers = [];
+
+    restrictions.forEach(r => {
+        if (!r.geometry) return;
+        try {
+            let layer;
+            if (r.geometry.rings) {
+                // Polygon
+                const coords = r.geometry.rings.map(ring =>
+                    ring.map(pt => [pt[1], pt[0]])
+                );
+                layer = L.polygon(coords, {
+                    color: r.color,
+                    fillColor: r.fillColor,
+                    fillOpacity: 0.2,
+                    weight: 2
+                });
+            } else if (r.geometry.paths) {
+                // Polyline
+                const coords = r.geometry.paths.map(path =>
+                    path.map(pt => [pt[1], pt[0]])
+                );
+                layer = L.polyline(coords, {
+                    color: r.color,
+                    weight: 2
+                });
+            } else if (r.geometry.x !== undefined) {
+                // Point
+                layer = L.circleMarker([r.geometry.y, r.geometry.x], {
+                    radius: 6,
+                    color: r.color,
+                    fillColor: r.fillColor,
+                    fillOpacity: 0.5
+                });
+            }
+
+            if (layer) {
+                const desc = describeRestriction(r);
+                layer.bindPopup(`<b>${desc.layerName}</b><br>${desc.name}<br><small>${desc.detail.substring(0, 200)}</small>`);
+                layer.addTo(map);
+                zoneLayers.push(layer);
+            }
+        } catch (e) {
+            console.warn('Error rendering zone:', e);
+        }
+    });
+}
+
+// ============================================================
+// UI RENDERING
+// ============================================================
+function renderVerdict(verdict) {
+    const el = document.getElementById('verdict');
+    el.className = `verdict-banner ${verdict.level}`;
+
+    let icon, text;
+    if (verdict.level === 'yes') {
+        icon = '\u2705';
+        text = '\u00a1Puedes volar!';
+    } else if (verdict.level === 'caution') {
+        icon = '\u26a0\ufe0f';
+        text = 'Vuela con precauci\u00f3n';
+    } else {
+        icon = '\u274c';
+        text = 'No vueles aqu\u00ed';
+    }
+
+    el.innerHTML = `
+        <div class="verdict-icon">${icon}</div>
+        <div class="verdict-text">${text}</div>
+        <div class="verdict-sub">${verdict.reasons.length > 0 ? verdict.reasons.join('. ') + '.' : 'No se han detectado restricciones.'}</div>
+    `;
+}
+
+function renderRestrictions(restrictions) {
+    const card = document.getElementById('restrictionsCard');
+    const list = document.getElementById('restrictionsList');
+
+    if (restrictions.length === 0) {
+        card.style.display = 'block';
+        list.innerHTML = `
+            <div class="restriction-item">
+                <div class="restriction-dot green"></div>
+                <div>
+                    <div class="restriction-name">Sin restricciones detectadas</div>
+                    <div class="restriction-detail">No se han encontrado zonas restringidas de ENAIRE en tu ubicaci\u00f3n actual.</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    card.style.display = 'block';
+    list.innerHTML = restrictions.map(r => {
+        const desc = describeRestriction(r);
+        const parts = [desc.detail];
+        if (desc.height) parts.push(desc.height);
+        if (desc.dates) parts.push(desc.dates);
+        if (desc.contact) parts.push('Contacto: ' + desc.contact);
+
+        return `
+            <div class="restriction-item">
+                <div class="restriction-dot ${desc.severity}"></div>
+                <div>
+                    <div class="restriction-name">${desc.layerName}: ${desc.name}</div>
+                    <div class="restriction-detail">${parts.join(' | ')}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderWeather(checks) {
+    const card = document.getElementById('weatherCard');
+    const grid = document.getElementById('weatherGrid');
+    card.style.display = 'block';
+
+    grid.innerHTML = checks.map(c => `
+        <div class="weather-item">
+            <div class="weather-value">${c.value}</div>
+            <div class="weather-label">${c.label}</div>
+            <div class="weather-status ${c.status}">${c.note}</div>
+        </div>
+    `).join('');
+}
+
+function renderDaylight(dl) {
+    const card = document.getElementById('daylightCard');
+    const content = document.getElementById('daylightContent');
+    card.style.display = 'block';
+
+    const barColor = dl.isDaylight
+        ? (dl.minutesToSunset && dl.minutesToSunset < 30 ? 'var(--yellow)' : 'var(--green)')
+        : 'var(--red)';
+
+    const statusText = dl.isDaylight
+        ? (dl.minutesToSunset !== null ? `Es de d\u00eda. Faltan ${dl.minutesToSunset} min para el atardecer.` : 'Es de d\u00eda.')
+        : 'Es de noche. Vuelo nocturno requiere autorizaci\u00f3n.';
+
+    content.innerHTML = `
+        <div style="font-size:0.9rem;margin-bottom:0.5rem;color:${dl.isDaylight ? 'var(--green)' : 'var(--red)'};font-weight:600;">
+            ${statusText}
+        </div>
+        <div class="daylight-bar">
+            <div class="daylight-fill" style="width:${dl.progress}%;background:${barColor};"></div>
+        </div>
+        <div class="daylight-info">
+            <span>Amanecer: ${dl.sunrise}</span>
+            <span>Atardecer: ${dl.sunset}</span>
+        </div>
+    `;
+}
+
+function renderLocation(lat, lng, accuracy) {
+    const el = document.getElementById('locationInfo');
+    el.style.display = 'flex';
+    el.innerHTML = `
+        <span>Ubicaci\u00f3n: <strong>${lat.toFixed(5)}, ${lng.toFixed(5)}</strong></span>
+        <span style="color:var(--text-muted);font-size:0.75rem;">(precisi\u00f3n: ~${Math.round(accuracy)}m)</span>
+    `;
+}
+
+function renderError(message, detail) {
+    const el = document.getElementById('verdict');
+    el.className = 'verdict-banner loading';
+    el.innerHTML = `
+        <div class="error-box">
+            <strong>${message}</strong>
+            ${detail ? `<p>${detail}</p>` : ''}
+        </div>
+    `;
+}
+
+// ============================================================
+// MAIN CHECK
+// ============================================================
+async function startCheck() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    btn.textContent = 'Analizando...';
+
+    // Reset verdict
+    const verdictEl = document.getElementById('verdict');
+    verdictEl.className = 'verdict-banner loading';
+    verdictEl.innerHTML = `
+        <div class="spinner"></div>
+        <div class="verdict-text">Analizando tu ubicaci\u00f3n...</div>
+        <div class="verdict-sub">Obteniendo GPS, consultando ENAIRE y meteorolog\u00eda</div>
+    `;
+
+    try {
+        // Step 1: Get position
+        const pos = await getPosition();
+        renderLocation(pos.lat, pos.lng, pos.accuracy);
+
+        // Step 2: Query ENAIRE + Weather in parallel
+        const [restrictions, weather] = await Promise.all([
+            queryAllENAIRE(pos.lat, pos.lng),
+            getWeather(pos.lat, pos.lng)
+        ]);
+
+        // Step 3: Evaluate
+        const weatherChecks = evaluateWeather(weather);
+        const daylight = evaluateDaylight(weather);
+        const verdict = computeVerdict(restrictions, weatherChecks, daylight);
+
+        // Step 4: Render everything
+        renderVerdict(verdict);
+        renderRestrictions(restrictions);
+        renderWeather(weatherChecks);
+        renderDaylight(daylight);
+
+        // Timestamp
+        const ts = document.getElementById('timestamp');
+        ts.style.display = 'block';
+        ts.textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        // Map
+        document.getElementById('mapCard').style.display = 'block';
+        initMap(pos.lat, pos.lng);
+        renderZonesOnMap(restrictions);
+
+        // Also query and render nearby zones that are visible on the map but user is NOT inside
+        // We do a broader query using the map bounds after initial render
+        setTimeout(() => {
+            queryNearbyZones(pos.lat, pos.lng);
+            map.invalidateSize();
+        }, 300);
+
+    } catch (e) {
+        console.error(e);
+        renderError('Error al analizar', e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Actualizar';
+    }
+}
+
+// ============================================================
+// NEARBY ZONES FOR MAP (wider area)
+// ============================================================
+async function queryNearbyZones(lat, lng) {
+    // Query with a bounding box ~15km around the user
+    const delta = 0.15; // ~15km
+    const xmin = (lng - delta) * 20037508.34 / 180;
+    const yminRad = Math.log(Math.tan((90 + lat - delta) * Math.PI / 360)) / (Math.PI / 180);
+    const ymin = yminRad * 20037508.34 / 180;
+    const xmax = (lng + delta) * 20037508.34 / 180;
+    const ymaxRad = Math.log(Math.tan((90 + lat + delta) * Math.PI / 360)) / (Math.PI / 180);
+    const ymax = ymaxRad * 20037508.34 / 180;
+
+    const envelope = JSON.stringify({
+        xmin, ymin, xmax, ymax,
+        spatialReference: { wkid: 102100 }
+    });
+
+    const allFeatures = [];
+
+    await Promise.all(ENAIRE_LAYERS.map(async (layer) => {
+        try {
+            const params = new URLSearchParams({
+                geometry: envelope,
+                geometryType: 'esriGeometryEnvelope',
+                spatialRel: 'esriSpatialRelIntersects',
+                outFields: 'NAME_TXT,IDENT_TXT,REMARKS_TXT_S,REMARKS_TXT',
+                returnGeometry: 'true',
+                outSR: '4326',
+                f: 'json'
+            });
+
+            const resp = await fetch(`${layer.url}/query?${params.toString()}`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            (data.features || []).forEach(f => {
+                allFeatures.push({
+                    layer: layer.name,
+                    severity: layer.severity,
+                    type: layer.type,
+                    color: layer.color,
+                    fillColor: layer.fillColor,
+                    attributes: f.attributes,
+                    geometry: f.geometry
+                });
+            });
+        } catch (e) {
+            console.warn(`Nearby query error for ${layer.name}:`, e);
+        }
+    }));
+
+    // Render on map (additional zones)
+    allFeatures.forEach(r => {
+        if (!r.geometry) return;
+        try {
+            let layer;
+            if (r.geometry.rings) {
+                const coords = r.geometry.rings.map(ring => ring.map(pt => [pt[1], pt[0]]));
+                layer = L.polygon(coords, { color: r.color, fillColor: r.fillColor, fillOpacity: 0.12, weight: 1.5 });
+            } else if (r.geometry.x !== undefined) {
+                layer = L.circleMarker([r.geometry.y, r.geometry.x], {
+                    radius: 5, color: r.color, fillColor: r.fillColor, fillOpacity: 0.4
+                });
+            }
+            if (layer) {
+                const name = r.attributes.NAME_TXT || r.attributes.IDENT_TXT || r.layer;
+                const detail = r.attributes.REMARKS_TXT_S || r.attributes.REMARKS_TXT || '';
+                const cleanDetail = detail.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                layer.bindPopup(`<b>${r.layer}</b><br>${name}<br><small>${cleanDetail.substring(0, 200)}</small>`);
+                layer.addTo(map);
+                zoneLayers.push(layer);
+            }
+        } catch (e) { /* skip */ }
+    });
+}
+
+// ============================================================
+// AUTO-START
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    startCheck();
+});
+</script>
+
+</body>
+</html>
