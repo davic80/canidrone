@@ -52,16 +52,16 @@
         }
 
         .main-container {
-            max-width: 800px;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 0.65rem;
         }
 
         /* --- MODE TOGGLE --- */
         .mode-toggle {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.6rem;
         }
 
         .mode-btn {
@@ -172,8 +172,17 @@
             background: var(--card);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
+            padding: 0.8rem;
+            margin-bottom: 0.6rem;
+        }
+
+        #mapCard {
+            padding: 0.55rem;
+        }
+
+        #mapCard .card-title {
+            margin-bottom: 0.45rem;
+            padding-left: 0.2rem;
         }
 
         .card-title {
@@ -263,9 +272,51 @@
         }
 
         #map {
-            height: 400px;
+            height: 470px;
             border-radius: 12px;
             z-index: 0;
+        }
+
+        .address-panel {
+            display: none;
+            gap: 0.45rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .address-input {
+            flex: 1;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .address-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .address-btn {
+            padding: 0.65rem 0.9rem;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .address-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 680px) {
+            .main-container { padding: 0.45rem; }
+            #map { height: 430px; }
+            #mapCard { padding: 0.45rem; }
         }
 
         /* --- CROSSHAIR (centered on map in manual mode) --- */
@@ -481,11 +532,19 @@
     <!-- Mode toggle -->
     <div class="mode-toggle">
         <button id="modeGps" class="mode-btn active" onclick="setMode('gps')">
-            Mi ubicaci&oacute;n (GPS)
+            Mi ubicaci&oacute;n
         </button>
         <button id="modeManual" class="mode-btn" onclick="setMode('manual')">
             Elegir en el mapa
         </button>
+        <button id="modeAddress" class="mode-btn" onclick="setMode('address')">
+            Introducir direcci&oacute;n
+        </button>
+    </div>
+
+    <div id="addressPanel" class="address-panel">
+        <input id="addressInput" class="address-input" type="text" placeholder="Ej: Plaza Mayor, Madrid" />
+        <button id="addressSearchBtn" class="address-btn" onclick="searchAddress()">Buscar y comprobar</button>
     </div>
 
     <!-- Map (moved to top for manual mode) -->
@@ -622,7 +681,7 @@ const ENAIRE_LAYERS = [
 let map = null;
 let userMarker = null;      // blue dot for GPS position
 let zoneLayers = [];
-let currentMode = 'gps';    // 'gps' or 'manual'
+let currentMode = 'gps';    // 'gps' | 'manual' | 'address'
 let lastGpsPos = null;      // last known GPS { lat, lng }
 let isChecking = false;
 
@@ -633,15 +692,17 @@ function setMode(mode) {
     currentMode = mode;
     document.getElementById('modeGps').classList.toggle('active', mode === 'gps');
     document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+    document.getElementById('modeAddress').classList.toggle('active', mode === 'address');
     document.getElementById('crosshair').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('checkHereBtn').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('mapCoords').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('gpsRecenter').style.display = mode === 'manual' ? 'flex' : 'none';
+    document.getElementById('addressPanel').style.display = mode === 'address' ? 'flex' : 'none';
     document.getElementById('refreshBtn').style.display = mode === 'gps' ? 'block' : 'none';
 
     if (mode === 'gps') {
         startCheck();
-    } else {
+    } else if (mode === 'manual') {
         // Show idle verdict
         const el = document.getElementById('verdict');
         el.className = 'verdict-banner idle';
@@ -652,6 +713,18 @@ function setMode(mode) {
         `;
         // Update coords display
         if (map) updateCoordsDisplay();
+    } else {
+        const el = document.getElementById('verdict');
+        el.className = 'verdict-banner idle';
+        el.innerHTML = `
+            <div class="verdict-icon" style="font-size:2.2rem;">&#x1F50E;</div>
+            <div class="verdict-text" style="color:var(--accent);font-size:1.15rem;">Introduce una direcci&oacute;n y pulsa "Buscar y comprobar"</div>
+            <div class="verdict-sub">Ejemplo: "Plaza Mayor, Madrid"</div>
+        `;
+        if (!map) {
+            initMap(40.4168, -3.7038);
+            map.invalidateSize();
+        }
     }
 }
 
@@ -674,6 +747,65 @@ async function checkHere() {
     if (!map || isChecking) return;
     const center = map.getCenter();
     await runAnalysis(center.lat, center.lng, null, 'manual');
+}
+
+async function geocodeAddress(query) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(query)}`;
+    const resp = await fetch(url, {
+        headers: {
+            'Accept-Language': 'es'
+        }
+    });
+
+    if (!resp.ok) {
+        throw new Error('No se pudo consultar el servicio de direcciones');
+    }
+
+    const data = await resp.json();
+    if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No se ha encontrado esa direcci\u00f3n');
+    }
+
+    return {
+        lat: Number(data[0].lat),
+        lng: Number(data[0].lon)
+    };
+}
+
+async function searchAddress() {
+    if (isChecking) return;
+
+    const input = document.getElementById('addressInput');
+    const searchBtn = document.getElementById('addressSearchBtn');
+    const query = input.value.trim();
+
+    if (!query) {
+        renderError('Falta la direcci\u00f3n', 'Escribe una direcci\u00f3n para comprobar la zona.');
+        return;
+    }
+
+    searchBtn.disabled = true;
+    searchBtn.textContent = 'Buscando...';
+
+    const verdictEl = document.getElementById('verdict');
+    verdictEl.className = 'verdict-banner loading';
+    verdictEl.innerHTML = `
+        <div class="spinner"></div>
+        <div class="verdict-text">Buscando direcci&oacute;n...</div>
+        <div class="verdict-sub">Geocodificando y preparando an&aacute;lisis</div>
+    `;
+
+    try {
+        const location = await geocodeAddress(query);
+        initMap(location.lat, location.lng);
+        map.setView([location.lat, location.lng], 14);
+        await runAnalysis(location.lat, location.lng, null, 'address');
+    } catch (e) {
+        renderError('Direcci\u00f3n no encontrada', e.message);
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Buscar y comprobar';
+    }
 }
 
 // ============================================================
@@ -1116,9 +1248,12 @@ function renderDaylight(dl) {
 function renderLocation(lat, lng, accuracy, source) {
     const el = document.getElementById('locationInfo');
     el.style.display = 'flex';
-    const badge = source === 'gps'
-        ? '<span class="location-badge">GPS</span>'
-        : '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+    let badge = '<span class="location-badge">GPS</span>';
+    if (source === 'manual') {
+        badge = '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+    } else if (source === 'address') {
+        badge = '<span class="location-badge" style="background:rgba(249,115,22,0.15);color:#f97316;">Direcci\u00f3n</span>';
+    }
     const accText = accuracy !== null ? `<span style="color:var(--text-muted);font-size:0.75rem;">(precisi\u00f3n: ~${Math.round(accuracy)}m)</span>` : '';
     el.innerHTML = `
         ${badge}
@@ -1217,10 +1352,13 @@ async function queryNearbyZones(lat, lng) {
 // ============================================================
 async function runAnalysis(lat, lng, accuracy, source) {
     isChecking = true;
-    const btn = source === 'gps' ? document.getElementById('refreshBtn') : document.getElementById('checkHereBtn');
+    const btn = source === 'gps'
+        ? document.getElementById('refreshBtn')
+        : source === 'address'
+            ? document.getElementById('addressSearchBtn')
+            : document.getElementById('checkHereBtn');
     btn.disabled = true;
-    if (source === 'gps') btn.textContent = 'Analizando...';
-    else btn.textContent = 'Analizando...';
+    btn.textContent = source === 'address' ? 'Analizando...' : 'Analizando...';
 
     // Loading state
     const verdictEl = document.getElementById('verdict');
@@ -1267,6 +1405,7 @@ async function runAnalysis(lat, lng, accuracy, source) {
         isChecking = false;
         btn.disabled = false;
         if (source === 'gps') btn.textContent = 'Actualizar';
+        else if (source === 'address') btn.textContent = 'Buscar y comprobar';
         else btn.textContent = 'Comprobar aqu\u00ed';
     }
 }
@@ -1311,6 +1450,13 @@ async function startCheck() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    const addressInput = document.getElementById('addressInput');
+    addressInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && currentMode === 'address') {
+            event.preventDefault();
+            searchAddress();
+        }
+    });
     startCheck();
 });
 </script>
