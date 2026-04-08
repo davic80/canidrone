@@ -27,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Forzamos el nombre del repo a minúsculas por seguridad (GHCR lo requiere)
+      # Forzamos el nombre del repo a minúsculas para evitar errores 403 de Case Sensitivity
       - name: Prepare Image Name
         run: |
           echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
@@ -81,13 +81,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Prepare Version and Image Name
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+          echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
       - name: Compose release notes
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           DIGEST="${{ needs.build-push.outputs.digest }}"
 
           {
@@ -100,13 +100,13 @@ jobs:
             echo "## Docker"
             echo ""
             echo '```bash'
-            echo "docker pull ghcr.io/davic80/canidrone:${VERSION}"
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:${{ env.VERSION }}"
             echo '```'
             echo ""
             echo "| Property | Value |"
             echo "|---|---|"
-            echo "| **Image** | \`ghcr.io/davic80/canidrone:${VERSION}\` |"
-            echo "| **Tags** | \`${VERSION}\`, \`latest\` |"
+            echo "| **Image** | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:${{ env.VERSION }}\` |"
+            echo "| **Tags** | \`${{ env.VERSION }}\`, \`latest\` |"
             echo "| **Platforms** | \`linux/amd64\`, \`linux/arm64\` |"
             echo "| **Digest** | \`${DIGEST}\` |"
             echo ""
@@ -115,7 +115,7 @@ jobs:
             echo "docker compose pull && docker compose up -d"
             echo ""
             echo "# Or pin this specific version"
-            echo "IMAGE_TAG=${VERSION} docker compose up -d"
+            echo "IMAGE_TAG=${{ env.VERSION }} docker compose up -d"
             echo '```'
           } > /tmp/release_notes.md
 
