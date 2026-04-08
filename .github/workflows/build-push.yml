@@ -50,6 +50,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Añadimos etiquetas explícitas para vincular el paquete al repo
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Canidrone Docker Image
           tags: |
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=sha,prefix=,format=short,enable=${{ github.ref == 'refs/heads/master' }}
@@ -97,7 +101,7 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "## Docker"
+            echo "## Docker (Public Image)"
             echo ""
             echo '```bash'
             echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:${{ env.VERSION }}"
