@@ -5,7 +5,7 @@ on:
     branches:
       - master
     tags:
-      - "v*"
+      - "*" # Ahora acepta cualquier tag, no solo los que empiezan por "v"
   workflow_dispatch:
 
 env:
@@ -55,7 +55,7 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=Canidrone Docker Image
           tags: |
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
             type=sha,prefix=,format=short,enable=${{ github.ref == 'refs/heads/master' }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -72,12 +72,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Job 2: GitHub Release (only on version tags) ─────────────────────────────
+  # ── Job 2: GitHub Release (only on tags) ─────────────────────────────────────
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: build-push
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
 
@@ -87,7 +87,9 @@ jobs:
 
       - name: Prepare Version and Image Name
         run: |
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+          # Extrae la versión quitando la 'v' si existe, o dejándola igual si no está
+          CLEAN_VERSION=${GITHUB_REF_NAME#v}
+          echo "VERSION=$CLEAN_VERSION" >> $GITHUB_ENV
           echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
       - name: Compose release notes
