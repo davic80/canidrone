@@ -519,7 +519,24 @@
             white-space: nowrap;
             pointer-events: none;
         }
+
+        /* --- AD SLOTS --- */
+        .ad-slot {
+            background: rgba(255,255,255,0.02);
+            border: 1px dashed var(--card-border);
+            border-radius: 10px;
+            padding: 0.4rem;
+            margin-bottom: 0.6rem;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .ad-slot ins.adsbygoogle {
+            display: block;
+        }
     </style>
+    <!-- Google AdSense — TODO: replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -545,6 +562,17 @@
     <div id="addressPanel" class="address-panel">
         <input id="addressInput" class="address-input" type="text" placeholder="Ej: Plaza Mayor, Madrid" />
         <button id="addressSearchBtn" class="address-btn" onclick="searchAddress()">Buscar y comprobar</button>
+    </div>
+
+    <!-- Ad slot: top — TODO: set data-ad-client and data-ad-slot with your AdSense values -->
+    <div class="ad-slot ad-slot--top">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="XXXXXXXXXX"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
     <!-- Map (moved to top for manual mode) -->
@@ -605,6 +633,17 @@
     <div id="daylightCard" class="card" style="display:none;">
         <div class="card-title">Luz solar</div>
         <div id="daylightContent"></div>
+    </div>
+
+    <!-- Ad slot: bottom — TODO: set data-ad-client and data-ad-slot with your AdSense values -->
+    <div class="ad-slot ad-slot--bottom">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="YYYYYYYYYY"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
     <!-- Refresh -->
@@ -753,7 +792,8 @@ async function geocodeAddress(query) {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(query)}`;
     const resp = await fetch(url, {
         headers: {
-            'Accept-Language': 'es'
+            'Accept-Language': 'es',
+            'User-Agent': 'canidrone/1.2.0 (canidrone.f1madrid.win; https://github.com/davic80/canidrone)'
         }
     });
 

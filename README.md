@@ -1,107 +1,122 @@
 # Can I Drone?
 
-Check instantly if you can fly your drone in Spain. Real-time airspace restrictions from [ENAIRE](https://drones.enaire.es), weather conditions from [Open-Meteo](https://open-meteo.com), and daylight status -- all in one screen.
+Comprueba al instante si puedes volar tu dron en España. Restricciones de espacio aéreo de [ENAIRE](https://drones.enaire.es) en tiempo real, meteorología de [Open-Meteo](https://open-meteo.com) y estado de luz solar — todo en una sola pantalla.
 
 **Live:** [canidrone.f1madrid.win](https://canidrone.f1madrid.win)
 
-## What it does
+## Qué hace
 
-1. **Geolocates you** (requires HTTPS + browser permission)
-2. **Queries ENAIRE ArcGIS services** -- controlled airspace (CTR/FIZ), restricted zones, airport surroundings, infrastructure zones, active NOTAMs, and warnings
-3. **Fetches live weather** -- wind, gusts, precipitation, visibility, cloud cover, temperature, humidity
-4. **Checks daylight** -- sunrise/sunset times, minutes until dark
-5. **Gives a clear verdict**: green (fly), yellow (caution), red (don't fly)
-6. **Shows a map** with all nearby restriction zones rendered as colored polygons
+1. **Tres modos de ubicación:**
+   - **Mi ubicación** — geolocalización GPS del navegador (requiere HTTPS + permiso del browser)
+   - **Elegir en el mapa** — arrastra el mapa y pulsa "Comprobar aquí" para analizar cualquier punto
+   - **Introducir dirección** — escribe una dirección española; geocodificación via [Nominatim](https://nominatim.openstreetmap.org/)
+2. **Consulta ENAIRE** — 6 capas ArcGIS REST: espacio aéreo controlado (CTR/FIZ), zonas restringidas, entorno aeroportuario, infraestructuras críticas, avisos y NOTAMs activos
+3. **Meteorología en tiempo real** — viento, rachas, precipitación, visibilidad, nubosidad, temperatura, humedad
+4. **Luz solar** — amanecer/atardecer, minutos hasta el anochecer, barra de progreso del día
+5. **Veredicto claro** — banner verde (puedes volar), amarillo (precaución), rojo (no vueles)
+6. **Mapa dark** con zonas ENAIRE pintadas como polígonos de colores (Leaflet + CARTO)
 
-## Screenshots
+## Stack
 
-| Verdict | Map |
-|---------|-----|
-| Clear YES/NO/CAUTION banner | Leaflet dark map with ENAIRE zones |
+- **Frontend**: HTML/CSS/JS vanilla — sin build tools, single `index.html`
+- **Mapa**: [Leaflet.js](https://leafletjs.com) + CARTO dark tiles
+- **Espacio aéreo**: ENAIRE ArcGIS REST API (público, sin API key)
+- **Meteorología**: [Open-Meteo](https://open-meteo.com) (gratuito, sin API key)
+- **Geocodificación**: [Nominatim](https://nominatim.openstreetmap.org/) (OpenStreetMap)
+- **Contenedor**: nginx:alpine, multi-arch (`linux/amd64` + `linux/arm64`)
+- **Despliegue**: Raspberry Pi + Cloudflare Tunnel
 
-## Tech stack
+## Despliegue en Raspberry Pi
 
-- **Frontend**: Vanilla HTML/CSS/JS (zero dependencies, zero build step)
-- **Map**: [Leaflet](https://leafletjs.com) + CARTO dark tiles
-- **Airspace data**: ENAIRE ArcGIS REST API (public, no key needed)
-- **Weather**: [Open-Meteo API](https://open-meteo.com) (free, no key needed)
-- **Container**: nginx:alpine
-- **Deployment**: Raspberry Pi + Cloudflare Tunnel
+### Requisitos
 
-## Deploy on Raspberry Pi
+- Docker & Docker Compose instalados
+- Token de [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) apuntando a `http://canidrone-app:80`
 
-### Prerequisites
-
-- Docker & Docker Compose installed
-- A [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) token pointing to `http://canidrone-app:80`
-
-### Quick start
+### Inicio rápido
 
 ```bash
 git clone https://github.com/davic80/canidrone.git
 cd canidrone
 
-# Create .env with your tunnel token
-echo "CLOUDFLARE_TUNNEL_TOKEN=your-token-here" > .env
+# Crear .env con tu token del tunnel
+echo "CLOUDFLARE_TUNNEL_TOKEN=tu-token-aqui" > .env
 
-# Run
+# Arrancar
 docker compose up -d
 ```
 
-The app will be available at:
-- Local: `http://<pi-ip>:8090`
-- Public: `https://canidrone.f1madrid.win` (via Cloudflare Tunnel)
+La app estará disponible en:
+- Local: `http://<ip-raspberry>:8090`
+- Pública: `https://canidrone.f1madrid.win` (vía Cloudflare Tunnel)
 
-> **Note**: Geolocation requires HTTPS. It will only work through the Cloudflare Tunnel URL, not via plain HTTP.
+> **Nota**: La geolocalización GPS requiere HTTPS. Solo funciona a través de la URL de Cloudflare Tunnel, no vía HTTP plano.
 
-### Update to latest version
+### Actualizar a la última versión
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-### Pin a specific version
+### Usar una versión específica
 
 ```bash
-IMAGE_TAG=1.1.0 docker compose up -d
+IMAGE_TAG=1.2.0 docker compose up -d
 ```
-
-## ENAIRE data layers
-
-| Layer | Service | Severity |
-|-------|---------|----------|
-| Controlled airspace / FIZ | `Drones_ZG_Aero_V3/MapServer/1` | Red |
-| Warnings (Avisos) | `Drones_ZG_Aero_V3/MapServer/2` | Orange |
-| Restricted zones | `Drones_ZG_Aero_V3/MapServer/10` | Red |
-| Airport surroundings | `Drones_ZG_Aero_V3/MapServer/6` | Red |
-| Critical infrastructure | `Drones_ZG_Infra_V0/MapServer/11` | Yellow |
-| NOTAMs | `NOTAM_UAS_APP_V3/MapServer/1` | Orange |
-
-## Weather thresholds
-
-| Parameter | OK | Caution | No fly |
-|-----------|----|---------|--------|
-| Wind | < 25 km/h | 25-40 km/h | > 40 km/h |
-| Gusts | < 35 km/h | 35-50 km/h | > 50 km/h |
-| Precipitation | 0 mm | 0-2 mm | > 2 mm |
-| Visibility | > 3 km | 1-3 km | < 1 km |
 
 ## CI/CD
 
-Pushing a tag triggers a GitHub Actions workflow that:
-1. Builds a multi-arch image (`linux/amd64` + `linux/arm64`)
-2. Pushes to `ghcr.io/davic80/canidrone`
-3. Creates a GitHub Release
+Cualquier push de tag dispara el workflow de GitHub Actions, que:
+1. Construye imagen multi-arch (`linux/amd64` + `linux/arm64`)
+2. Publica en `ghcr.io/davic80/canidrone`
+3. Crea un GitHub Release con instrucciones de despliegue
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
-## Disclaimer
+## Google AdSense
 
-This app is **informational only** and does not replace the official [ENAIRE Drones](https://drones.enaire.es) tool or [AESA](https://www.seguridadaerea.gob.es/es/ambitos/drones) regulations. Always verify airspace restrictions through official channels before flying.
+La app incluye dos slots publicitarios responsivos (horizontales):
 
-## License
+- **Slot superior** — entre el panel de modo/dirección y el mapa
+- **Slot inferior** — entre la tarjeta de luz solar y el botón Actualizar
+
+Para activar los anuncios, edita `index.html` y reemplaza los tres placeholders:
+
+| Placeholder | Dónde | Por qué |
+|-------------|-------|---------|
+| `ca-pub-XXXXXXXXXXXXXXXX` | `<head>` (script) + 2 `<ins>` | Tu Publisher ID de AdSense |
+| `XXXXXXXXXX` (slot top) | `<ins>` superior | ID del slot de anuncio 1 |
+| `YYYYYYYYYY` (slot bottom) | `<ins>` inferior | ID del slot de anuncio 2 |
+
+Ver guía completa de configuración abajo.
+
+## Capas ENAIRE
+
+| Capa | Servicio | Severidad |
+|------|----------|-----------|
+| Espacio aéreo controlado / FIZ | `Drones_ZG_Aero_V3/MapServer/1` | Rojo |
+| Avisos | `Drones_ZG_Aero_V3/MapServer/2` | Naranja |
+| Zonas restringidas | `Drones_ZG_Aero_V3/MapServer/10` | Rojo |
+| Entorno aeroportuario | `Drones_ZG_Aero_V3/MapServer/6` | Rojo |
+| Infraestructuras críticas | `Drones_ZG_Infra_V0/MapServer/11` | Amarillo |
+| NOTAMs | `NOTAM_UAS_APP_V3/MapServer/1` | Naranja |
+
+## Umbrales meteorológicos
+
+| Parámetro | OK | Precaución | No volar |
+|-----------|----|------------|----------|
+| Viento | < 25 km/h | 25–40 km/h | > 40 km/h |
+| Rachas | < 35 km/h | 35–50 km/h | > 50 km/h |
+| Precipitación | 0 mm | 0–2 mm | > 2 mm |
+| Visibilidad | > 3 km | 1–3 km | < 1 km |
+
+## Aviso legal
+
+Esta app es **orientativa** y no sustituye la consulta oficial de [ENAIRE Drones](https://drones.enaire.es) ni la normativa de [AESA](https://www.seguridadaerea.gob.es/es/ambitos/drones). Verifica siempre las restricciones por los canales oficiales antes de volar.
+
+## Licencia
 
 MIT
