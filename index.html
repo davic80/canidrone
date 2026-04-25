@@ -331,6 +331,43 @@
         .gps-btn svg { width: 18px; height: 18px; }
         .gps-btn:hover { border-color: var(--accent); }
 
+        /* --- ADDRESS MODE --- */
+        .address-panel {
+            display: none;
+            gap: 0.45rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .address-input {
+            flex: 1;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--card);
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        .address-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .address-btn {
+            padding: 0.65rem 0.9rem;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .address-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* --- DAYLIGHT --- */
         .daylight-bar {
             height: 8px;
@@ -541,6 +578,14 @@
         <button id="modeManual" class="mode-btn" onclick="setMode('manual')">
             Elegir en el mapa
         </button>
+        <button id="modeAddress" class="mode-btn" onclick="setMode('address')">
+            Introducir direcci&oacute;n
+        </button>
+    </div>
+
+    <div id="addressPanel" class="address-panel">
+        <input id="addressInput" class="address-input" type="text" placeholder="Ej: Plaza Mayor, Madrid" />
+        <button id="addressSearchBtn" class="address-btn" onclick="searchAddress()">Buscar y comprobar</button>
     </div>
 
     <!-- Map (moved to top for manual mode) -->
@@ -620,7 +665,7 @@
         y <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.
         Esta app es orientativa y no sustituye la consulta oficial.
         <br>Vuela siempre cumpliendo la normativa de <a href="https://www.seguridadaerea.gob.es/es/ambitos/drones" target="_blank" rel="noopener">AESA</a>.
-        <br><span style="opacity:0.4;">v1.1.2</span>
+        <br><span style="opacity:0.4;">v1.1.3</span>
     </div>
 </div>
 
@@ -738,16 +783,17 @@ function setMode(mode) {
     currentMode = mode;
     document.getElementById('modeGps').classList.toggle('active', mode === 'gps');
     document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
+    document.getElementById('modeAddress').classList.toggle('active', mode === 'address');
     document.getElementById('crosshair').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('checkHereBtn').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('mapCoords').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('gpsRecenter').style.display = mode === 'manual' ? 'flex' : 'none';
     document.getElementById('refreshBtn').style.display = mode === 'gps' ? 'block' : 'none';
+    document.getElementById('addressPanel').style.display = mode === 'address' ? 'flex' : 'none';
 
     if (mode === 'gps') {
         startCheck();
-    } else {
-        // Show idle verdict
+    } else if (mode === 'manual') {
         const el = document.getElementById('verdict');
         el.className = 'verdict-banner idle';
         el.innerHTML = `
@@ -755,8 +801,19 @@ function setMode(mode) {
             <div class="verdict-text" style="color:var(--accent);font-size:1.2rem;">Arrastra el mapa y pulsa "Comprobar aquí"</div>
             <div class="verdict-sub">El marcador azul indica el punto que se analizará</div>
         `;
-        // Update coords display
         if (map) updateCoordsDisplay();
+    } else {
+        const el = document.getElementById('verdict');
+        el.className = 'verdict-banner idle';
+        el.innerHTML = `
+            <div class="verdict-icon" style="font-size:2.2rem;">&#x1F50E;</div>
+            <div class="verdict-text" style="color:var(--accent);font-size:1.15rem;">Introduce una dirección y pulsa "Buscar y comprobar"</div>
+            <div class="verdict-sub">Ejemplo: "Plaza Mayor, Madrid"</div>
+        `;
+        if (!map) {
+            initMap(40.4168, -3.7038);
+            map.invalidateSize();
+        }
     }
 }
 
@@ -769,6 +826,54 @@ function updateCoordsDisplay() {
 function recenterGps() {
     if (lastGpsPos && map) {
         map.setView([lastGpsPos.lat, lastGpsPos.lng], 13);
+    }
+}
+
+// ============================================================
+// ADDRESS GEOCODING (Nominatim)
+// ============================================================
+async function geocodeAddress(query) {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(query)}`;
+    const resp = await fetch(url, {
+        headers: {
+            'Accept-Language': 'es',
+            'User-Agent': 'canidrone/1.1.3 (canidrone.f1madrid.win; https://github.com/davic80/canidrone)'
+        }
+    });
+    if (!resp.ok) throw new Error('No se pudo consultar el servicio de direcciones');
+    const data = await resp.json();
+    if (!Array.isArray(data) || data.length === 0) throw new Error('No se ha encontrado esa dirección');
+    return { lat: Number(data[0].lat), lng: Number(data[0].lon) };
+}
+
+async function searchAddress() {
+    if (isChecking) return;
+    const input = document.getElementById('addressInput');
+    const searchBtn = document.getElementById('addressSearchBtn');
+    const query = input.value.trim();
+    if (!query) {
+        renderError('Falta la dirección', 'Escribe una dirección para comprobar la zona.');
+        return;
+    }
+    searchBtn.disabled = true;
+    searchBtn.textContent = 'Buscando...';
+    const verdictEl = document.getElementById('verdict');
+    verdictEl.className = 'verdict-banner loading';
+    verdictEl.innerHTML = `
+        <div class="spinner"></div>
+        <div class="verdict-text">Buscando dirección...</div>
+        <div class="verdict-sub">Geocodificando y preparando análisis</div>
+    `;
+    try {
+        const location = await geocodeAddress(query);
+        initMap(location.lat, location.lng);
+        map.setView([location.lat, location.lng], 14);
+        await runAnalysis(location.lat, location.lng, null, 'address');
+    } catch (e) {
+        renderError('Dirección no encontrada', e.message);
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Buscar y comprobar';
     }
 }
 
@@ -1223,7 +1328,9 @@ function renderLocation(lat, lng, accuracy, source) {
     el.style.display = 'flex';
     const badge = source === 'gps'
         ? '<span class="location-badge">GPS</span>'
-        : '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+        : source === 'address'
+            ? '<span class="location-badge" style="background:rgba(249,115,22,0.15);color:#f97316;">Dirección</span>'
+            : '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
     const accText = accuracy !== null ? `<span style="color:var(--text-muted);font-size:0.75rem;">(precisión: ~${Math.round(accuracy)}m)</span>` : '';
     el.innerHTML = `
         ${badge}
@@ -1322,7 +1429,11 @@ async function queryNearbyZones(lat, lng) {
 // ============================================================
 async function runAnalysis(lat, lng, accuracy, source) {
     isChecking = true;
-    const btn = source === 'gps' ? document.getElementById('refreshBtn') : document.getElementById('checkHereBtn');
+    const btn = source === 'gps'
+        ? document.getElementById('refreshBtn')
+        : source === 'address'
+            ? document.getElementById('addressSearchBtn')
+            : document.getElementById('checkHereBtn');
     btn.disabled = true;
     btn.textContent = 'Analizando...';
 
@@ -1371,6 +1482,7 @@ async function runAnalysis(lat, lng, accuracy, source) {
         isChecking = false;
         btn.disabled = false;
         if (source === 'gps') btn.textContent = 'Actualizar';
+        else if (source === 'address') btn.textContent = 'Buscar y comprobar';
         else btn.textContent = 'Comprobar aquí';
     }
 }
@@ -1415,6 +1527,12 @@ async function startCheck() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addressInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && currentMode === 'address') {
+            e.preventDefault();
+            searchAddress();
+        }
+    });
     loadProducts();
     startCheck();
 });
