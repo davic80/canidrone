@@ -8,6 +8,7 @@ COPY nginx.conf /etc/nginx/conf.d/canidrone.conf
 
 # Copy the app
 COPY index.html /usr/share/nginx/html/index.html
+COPY productos.txt /usr/share/nginx/html/productos.txt
 
 # Expose port 80
 EXPOSE 80
