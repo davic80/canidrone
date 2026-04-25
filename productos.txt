@@ -1,0 +1,11 @@
+# canidrone — productos afiliados Amazon.es
+# tag de afiliado: canidrone-21
+#
+# Formato (una línea por producto):
+# ASIN | emoji | nombre | descripcion
+#
+# - Las líneas que empiezan por # son comentarios y se ignoran
+# - Las líneas en blanco se ignoran
+# - La descripcion puede contener cualquier texto excepto el carácter |
+
+B0FZ9Y4GPF | 🚀 | DJI Neo | Dron para principiantes con detección de obstáculos y ActiveTrack. Ligero, compacto y muy fácil de volar.

@@ -52,16 +52,16 @@
         }
 
         .main-container {
-            max-width: 860px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 0.65rem;
+            padding: 1rem;
         }
 
         /* --- MODE TOGGLE --- */
         .mode-toggle {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.6rem;
+            margin-bottom: 1rem;
         }
 
         .mode-btn {
@@ -172,17 +172,8 @@
             background: var(--card);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            padding: 0.8rem;
-            margin-bottom: 0.6rem;
-        }
-
-        #mapCard {
-            padding: 0.55rem;
-        }
-
-        #mapCard .card-title {
-            margin-bottom: 0.45rem;
-            padding-left: 0.2rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .card-title {
@@ -272,51 +263,9 @@
         }
 
         #map {
-            height: 470px;
+            height: 400px;
             border-radius: 12px;
             z-index: 0;
-        }
-
-        .address-panel {
-            display: none;
-            gap: 0.45rem;
-            margin-bottom: 0.6rem;
-        }
-
-        .address-input {
-            flex: 1;
-            padding: 0.65rem 0.75rem;
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            background: var(--card);
-            color: var(--text);
-            font-size: 0.9rem;
-        }
-
-        .address-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .address-btn {
-            padding: 0.65rem 0.9rem;
-            border: none;
-            border-radius: 10px;
-            background: var(--accent);
-            color: var(--bg);
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .address-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        @media (max-width: 680px) {
-            .main-container { padding: 0.45rem; }
-            #map { height: 430px; }
-            #mapCard { padding: 0.45rem; }
         }
 
         /* --- CROSSHAIR (centered on map in manual mode) --- */
@@ -446,43 +395,6 @@
         .refresh-btn:hover { opacity: 0.85; }
         .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* --- FOOTER --- */
-        .footer {
-            text-align: center;
-            padding: 1.5rem 1rem;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--card-border);
-            margin-top: 1rem;
-        }
-
-        .footer a { color: var(--accent); text-decoration: none; }
-
-        /* --- LEGEND --- */
-        .map-legend {
-            background: rgba(15,23,42,0.92);
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 0.72rem;
-            line-height: 1.6;
-            border: 1px solid var(--card-border);
-            color: var(--text);
-        }
-
-        .map-legend b { display: block; margin-bottom: 4px; font-size: 0.75rem; }
-
-        .legend-row {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-swatch {
-            width: 12px; height: 12px;
-            border-radius: 3px;
-            flex-shrink: 0;
-        }
-
         /* --- AFFILIATE PRODUCTS --- */
         .products-grid {
             display: grid;
@@ -494,7 +406,7 @@
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--card-border);
             border-radius: 10px;
-            padding: 0.7rem 0.6rem;
+            padding: 0.75rem 0.65rem;
             text-decoration: none;
             color: var(--text);
             display: flex;
@@ -530,40 +442,49 @@
             padding-top: 0.25rem;
         }
 
-        .product-card.featured {
-            border-color: var(--accent);
-            background: rgba(56,189,248,0.06);
-            grid-column: span 2;
-            flex-direction: row;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        @media (max-width: 400px) {
-            .product-card.featured { grid-column: span 1; flex-direction: column; }
-        }
-
-        .product-card.featured .product-emoji { font-size: 2.8rem; flex-shrink: 0; }
-
-        .product-featured-badge {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--bg);
-            background: var(--accent);
-            padding: 2px 7px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 0.2rem;
-        }
-
         .affiliate-note {
             font-size: 0.7rem;
             color: var(--text-muted);
             text-align: center;
-            margin-top: 0.5rem;
+            margin-top: 0.6rem;
             font-style: italic;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center;
+            padding: 1.5rem 1rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--card-border);
+            margin-top: 1rem;
+        }
+
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        /* --- LEGEND --- */
+        .map-legend {
+            background: rgba(15,23,42,0.92);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            line-height: 1.6;
+            border: 1px solid var(--card-border);
+            color: var(--text);
+        }
+
+        .map-legend b { display: block; margin-bottom: 4px; font-size: 0.75rem; }
+
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-swatch {
+            width: 12px; height: 12px;
+            border-radius: 3px;
+            flex-shrink: 0;
         }
 
         /* --- ERROR --- */
@@ -602,24 +523,7 @@
             white-space: nowrap;
             pointer-events: none;
         }
-
-        /* --- AD SLOTS --- */
-        .ad-slot {
-            background: rgba(255,255,255,0.02);
-            border: 1px dashed var(--card-border);
-            border-radius: 10px;
-            padding: 0.4rem;
-            margin-bottom: 0.6rem;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .ad-slot ins.adsbygoogle {
-            display: block;
-        }
     </style>
-    <!-- Google AdSense — TODO: replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -632,30 +536,11 @@
     <!-- Mode toggle -->
     <div class="mode-toggle">
         <button id="modeGps" class="mode-btn active" onclick="setMode('gps')">
-            Mi ubicaci&oacute;n
+            Mi ubicaci&oacute;n (GPS)
         </button>
         <button id="modeManual" class="mode-btn" onclick="setMode('manual')">
             Elegir en el mapa
         </button>
-        <button id="modeAddress" class="mode-btn" onclick="setMode('address')">
-            Introducir direcci&oacute;n
-        </button>
-    </div>
-
-    <div id="addressPanel" class="address-panel">
-        <input id="addressInput" class="address-input" type="text" placeholder="Ej: Plaza Mayor, Madrid" />
-        <button id="addressSearchBtn" class="address-btn" onclick="searchAddress()">Buscar y comprobar</button>
-    </div>
-
-    <!-- Ad slot: top — TODO: set data-ad-client and data-ad-slot with your AdSense values -->
-    <div class="ad-slot ad-slot--top">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-             data-ad-slot="XXXXXXXXXX"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
     <!-- Map (moved to top for manual mode) -->
@@ -718,89 +603,17 @@
         <div id="daylightContent"></div>
     </div>
 
-    <!-- Productos recomendados — Amazon Afiliados -->
-    <!-- Amazon Associates tracking ID: canidrone-21 -->
-    <div class="card">
-        <div class="card-title">Equipo recomendado para pilotos</div>
-        <div class="products-grid">
-            <a class="product-card featured"
-               href="https://www.amazon.es/dp/B0FZ9Y4GPF?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">🚀</div>
-                <div>
-                    <div class="product-featured-badge">Destacado</div>
-                    <div class="product-name" style="font-size:0.9rem;">DJI Neo</div>
-                    <div class="product-desc">Dron para principiantes con detecci&oacute;n de obst&aacute;culos y ActiveTrack. Ligero, intuitivo y muy f&aacute;cil de volar.</div>
-                    <div class="product-cta">Ver en Amazon →</div>
-                </div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B0CFRRV49S?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">🚁</div>
-                <div class="product-name">DJI Mini 4 Pro</div>
-                <div class="product-desc">El mejor dron compacto bajo 250g con Omnidireccional</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B0BFD9T6MF?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">✈️</div>
-                <div class="product-name">DJI Mini 2 SE</div>
-                <div class="product-desc">La opción más asequible bajo 249g con vídeo 2.7K</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B0B1HZ7K89?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">🔋</div>
-                <div class="product-name">Batería extra DJI Mini 4 Pro</div>
-                <div class="product-desc">Mayor autonomía para aprovechar cada vuelo</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B09X7BK27V?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">💾</div>
-                <div class="product-name">SanDisk Extreme 128 GB</div>
-                <div class="product-desc">MicroSD rápida y fiable para grabar en 4K sin drops</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B09TMHRGTZ?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">🎒</div>
-                <div class="product-name">Mochila para dron</div>
-                <div class="product-desc">Transporte seguro con compartimentos para accesorios</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-            <a class="product-card"
-               href="https://www.amazon.es/dp/B07D28X2V9?tag=canidrone-21"
-               target="_blank" rel="noopener sponsored">
-                <div class="product-emoji">🟠</div>
-                <div class="product-name">Pad de aterrizaje</div>
-                <div class="product-desc">Superficie visible y limpia para despegues y aterrizajes</div>
-                <div class="product-cta">Ver en Amazon →</div>
-            </a>
-        </div>
-        <p class="affiliate-note">* Enlace de afiliado de Amazon. Gano una pequeña comisi&oacute;n sin coste adicional para ti.</p>
-    </div>
-
-    <!-- Ad slot: bottom — TODO: set data-ad-client and data-ad-slot with your AdSense values -->
-    <div class="ad-slot ad-slot--bottom">
-        <ins class="adsbygoogle"
-             style="display:block"
-             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-             data-ad-slot="YYYYYYYYYY"
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
-
     <!-- Refresh -->
     <button id="refreshBtn" class="refresh-btn" onclick="startCheck()" disabled>
         Actualizar
     </button>
+
+    <!-- Productos recomendados — cargados desde productos.txt -->
+    <div id="productsCard" class="card" style="display:none;">
+        <div class="card-title">Equipo recomendado</div>
+        <div id="productsGrid" class="products-grid"></div>
+        <p class="affiliate-note">* Enlace de afiliado de Amazon. Gano una peque&ntilde;a comisi&oacute;n sin coste adicional para ti.</p>
+    </div>
 
     <div class="footer">
         Datos de <a href="https://drones.enaire.es" target="_blank" rel="noopener">ENAIRE Drones</a>
@@ -816,7 +629,7 @@
 // ============================================================
 const ENAIRE_LAYERS = [
     {
-        name: 'Espacio a\u00e9reo controlado / FIZ',
+        name: 'Espacio aéreo controlado / FIZ',
         url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Aero_V3/MapServer/1',
         color: '#ef4444',
         fillColor: '#ef4444',
@@ -848,7 +661,7 @@ const ENAIRE_LAYERS = [
         type: 'airport'
     },
     {
-        name: 'Infraestructuras cr\u00edticas',
+        name: 'Infraestructuras críticas',
         url: 'https://servais.enaire.es/insignias/rest/services/NSF/Drones_ZG_Infra_V0/MapServer/11',
         color: '#f59e0b',
         fillColor: '#f59e0b',
@@ -865,15 +678,57 @@ const ENAIRE_LAYERS = [
     }
 ];
 
+const AMAZON_TAG = 'canidrone-21';
+
 // ============================================================
 // STATE
 // ============================================================
 let map = null;
 let userMarker = null;      // blue dot for GPS position
 let zoneLayers = [];
-let currentMode = 'gps';    // 'gps' | 'manual' | 'address'
+let currentMode = 'gps';    // 'gps' or 'manual'
 let lastGpsPos = null;      // last known GPS { lat, lng }
 let isChecking = false;
+
+// ============================================================
+// AFFILIATE PRODUCTS — loaded from productos.txt
+// ============================================================
+async function loadProducts() {
+    try {
+        const resp = await fetch('productos.txt');
+        if (!resp.ok) return;
+        const text = await resp.text();
+
+        const products = text
+            .split('\n')
+            .map(l => l.trim())
+            .filter(l => l && !l.startsWith('#'))
+            .map(l => {
+                const parts = l.split('|').map(p => p.trim());
+                if (parts.length < 4) return null;
+                return { asin: parts[0], emoji: parts[1], nombre: parts[2], desc: parts[3] };
+            })
+            .filter(Boolean);
+
+        if (products.length === 0) return;
+
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = products.map(p => `
+            <a class="product-card"
+               href="https://www.amazon.es/dp/${p.asin}?tag=${AMAZON_TAG}"
+               target="_blank" rel="noopener sponsored">
+                <div class="product-emoji">${p.emoji}</div>
+                <div class="product-name">${p.nombre}</div>
+                <div class="product-desc">${p.desc}</div>
+                <div class="product-cta">Ver en Amazon &rarr;</div>
+            </a>
+        `).join('');
+
+        document.getElementById('productsCard').style.display = 'block';
+    } catch (e) {
+        // productos.txt no disponible, no mostrar la sección
+    }
+}
 
 // ============================================================
 // MODE SWITCHING
@@ -882,39 +737,25 @@ function setMode(mode) {
     currentMode = mode;
     document.getElementById('modeGps').classList.toggle('active', mode === 'gps');
     document.getElementById('modeManual').classList.toggle('active', mode === 'manual');
-    document.getElementById('modeAddress').classList.toggle('active', mode === 'address');
     document.getElementById('crosshair').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('checkHereBtn').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('mapCoords').style.display = mode === 'manual' ? 'block' : 'none';
     document.getElementById('gpsRecenter').style.display = mode === 'manual' ? 'flex' : 'none';
-    document.getElementById('addressPanel').style.display = mode === 'address' ? 'flex' : 'none';
     document.getElementById('refreshBtn').style.display = mode === 'gps' ? 'block' : 'none';
 
     if (mode === 'gps') {
         startCheck();
-    } else if (mode === 'manual') {
+    } else {
         // Show idle verdict
         const el = document.getElementById('verdict');
         el.className = 'verdict-banner idle';
         el.innerHTML = `
             <div class="verdict-icon" style="font-size:2.5rem;">&#x1F4CD;</div>
-            <div class="verdict-text" style="color:var(--accent);font-size:1.2rem;">Arrastra el mapa y pulsa "Comprobar aqu\u00ed"</div>
-            <div class="verdict-sub">El marcador azul indica el punto que se analizar\u00e1</div>
+            <div class="verdict-text" style="color:var(--accent);font-size:1.2rem;">Arrastra el mapa y pulsa "Comprobar aquí"</div>
+            <div class="verdict-sub">El marcador azul indica el punto que se analizará</div>
         `;
         // Update coords display
         if (map) updateCoordsDisplay();
-    } else {
-        const el = document.getElementById('verdict');
-        el.className = 'verdict-banner idle';
-        el.innerHTML = `
-            <div class="verdict-icon" style="font-size:2.2rem;">&#x1F50E;</div>
-            <div class="verdict-text" style="color:var(--accent);font-size:1.15rem;">Introduce una direcci&oacute;n y pulsa "Buscar y comprobar"</div>
-            <div class="verdict-sub">Ejemplo: "Plaza Mayor, Madrid"</div>
-        `;
-        if (!map) {
-            initMap(40.4168, -3.7038);
-            map.invalidateSize();
-        }
     }
 }
 
@@ -939,81 +780,21 @@ async function checkHere() {
     await runAnalysis(center.lat, center.lng, null, 'manual');
 }
 
-async function geocodeAddress(query) {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(query)}`;
-    const resp = await fetch(url, {
-        headers: {
-            'Accept-Language': 'es',
-            'User-Agent': 'canidrone/1.2.0 (canidrone.f1madrid.win; https://github.com/davic80/canidrone)'
-        }
-    });
-
-    if (!resp.ok) {
-        throw new Error('No se pudo consultar el servicio de direcciones');
-    }
-
-    const data = await resp.json();
-    if (!Array.isArray(data) || data.length === 0) {
-        throw new Error('No se ha encontrado esa direcci\u00f3n');
-    }
-
-    return {
-        lat: Number(data[0].lat),
-        lng: Number(data[0].lon)
-    };
-}
-
-async function searchAddress() {
-    if (isChecking) return;
-
-    const input = document.getElementById('addressInput');
-    const searchBtn = document.getElementById('addressSearchBtn');
-    const query = input.value.trim();
-
-    if (!query) {
-        renderError('Falta la direcci\u00f3n', 'Escribe una direcci\u00f3n para comprobar la zona.');
-        return;
-    }
-
-    searchBtn.disabled = true;
-    searchBtn.textContent = 'Buscando...';
-
-    const verdictEl = document.getElementById('verdict');
-    verdictEl.className = 'verdict-banner loading';
-    verdictEl.innerHTML = `
-        <div class="spinner"></div>
-        <div class="verdict-text">Buscando direcci&oacute;n...</div>
-        <div class="verdict-sub">Geocodificando y preparando an&aacute;lisis</div>
-    `;
-
-    try {
-        const location = await geocodeAddress(query);
-        initMap(location.lat, location.lng);
-        map.setView([location.lat, location.lng], 14);
-        await runAnalysis(location.lat, location.lng, null, 'address');
-    } catch (e) {
-        renderError('Direcci\u00f3n no encontrada', e.message);
-    } finally {
-        searchBtn.disabled = false;
-        searchBtn.textContent = 'Buscar y comprobar';
-    }
-}
-
 // ============================================================
 // GEOLOCATION
 // ============================================================
 function getPosition() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject(new Error('Tu navegador no soporta geolocalizaci\u00f3n'));
+            reject(new Error('Tu navegador no soporta geolocalización'));
             return;
         }
         navigator.geolocation.getCurrentPosition(
             pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
             err => {
-                if (err.code === 1) reject(new Error('Permiso de ubicaci\u00f3n denegado. Activa la geolocalizaci\u00f3n en los ajustes de tu navegador.'));
-                else if (err.code === 2) reject(new Error('No se pudo determinar tu ubicaci\u00f3n.'));
-                else reject(new Error('Tiempo de espera agotado. Int\u00e9ntalo de nuevo.'));
+                if (err.code === 1) reject(new Error('Permiso de ubicación denegado. Activa la geolocalización en los ajustes de tu navegador.'));
+                else if (err.code === 2) reject(new Error('No se pudo determinar tu ubicación.'));
+                else reject(new Error('Tiempo de espera agotado. Inténtalo de nuevo.'));
             },
             { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
         );
@@ -1088,14 +869,14 @@ function evaluateWeather(weather) {
     const gusts = c.wind_gusts_10m;
     let windStatus = 'ok', windNote = 'Viento aceptable';
     if (wind > 40 || gusts > 50) { windStatus = 'bad'; windNote = 'Viento peligroso para vuelo'; }
-    else if (wind > 25 || gusts > 35) { windStatus = 'warn'; windNote = 'Viento fuerte, precauci\u00f3n'; }
+    else if (wind > 25 || gusts > 35) { windStatus = 'warn'; windNote = 'Viento fuerte, precaución'; }
     checks.push({ label: 'Viento', value: `${wind} km/h`, sub: `Rachas: ${gusts} km/h`, status: windStatus, note: windNote });
 
     const precip = c.precipitation;
-    let precipStatus = 'ok', precipNote = 'Sin precipitaci\u00f3n';
+    let precipStatus = 'ok', precipNote = 'Sin precipitación';
     if (precip > 2) { precipStatus = 'bad'; precipNote = 'Lluvia activa, no volar'; }
-    else if (precip > 0) { precipStatus = 'warn'; precipNote = 'Precipitaci\u00f3n ligera'; }
-    checks.push({ label: 'Precipitaci\u00f3n', value: `${precip} mm`, status: precipStatus, note: precipNote });
+    else if (precip > 0) { precipStatus = 'warn'; precipNote = 'Precipitación ligera'; }
+    checks.push({ label: 'Precipitación', value: `${precip} mm`, status: precipStatus, note: precipNote });
 
     const vis = c.visibility;
     const visKm = (vis / 1000).toFixed(1);
@@ -1111,9 +892,9 @@ function evaluateWeather(weather) {
 
     const temp = c.temperature_2m;
     let tempStatus = 'ok', tempNote = 'Temperatura aceptable';
-    if (temp < 0) { tempStatus = 'warn'; tempNote = 'Riesgo de hielo en bater\u00edas'; }
-    else if (temp > 40) { tempStatus = 'warn'; tempNote = 'Calor extremo, bater\u00edas'; }
-    checks.push({ label: 'Temperatura', value: `${temp}\u00b0C`, status: tempStatus, note: tempNote });
+    if (temp < 0) { tempStatus = 'warn'; tempNote = 'Riesgo de hielo en baterías'; }
+    else if (temp > 40) { tempStatus = 'warn'; tempNote = 'Calor extremo, baterías'; }
+    checks.push({ label: 'Temperatura', value: `${temp}°C`, status: tempStatus, note: tempNote });
 
     const hum = c.relative_humidity_2m;
     let humStatus = 'ok', humNote = 'Humedad normal';
@@ -1170,7 +951,7 @@ function describeRestriction(result) {
 
     let height = '';
     if (a.RESTRICCION_LOWER !== undefined && a.RESTRICCION_LOWER !== null) {
-        height = `Restricci\u00f3n desde ${a.RESTRICCION_LOWER}m`;
+        height = `Restricción desde ${a.RESTRICCION_LOWER}m`;
         if (a.RESTRICCION_UPPER !== undefined && a.RESTRICCION_UPPER !== null) {
             height += ` hasta ${a.RESTRICCION_UPPER}m`;
         }
@@ -1205,7 +986,7 @@ function computeVerdict(restrictions, weatherChecks, daylight) {
 
     if (hasRed) {
         level = 'no';
-        reasons.push('Te encuentras en una zona con restricciones severas de espacio a\u00e9reo');
+        reasons.push('Te encuentras en una zona con restricciones severas de espacio aéreo');
     } else if (hasOrange) {
         if (level !== 'no') level = 'caution';
         reasons.push('Existen avisos o NOTAMs activos en tu zona');
@@ -1229,7 +1010,7 @@ function computeVerdict(restrictions, weatherChecks, daylight) {
 
     if (!daylight.isDaylight) {
         level = 'no';
-        reasons.push('Es de noche. Solo se permite vuelo nocturno con autorizaci\u00f3n espec\u00edfica');
+        reasons.push('Es de noche. Solo se permite vuelo nocturno con autorización específica');
     } else if (daylight.minutesToSunset !== null && daylight.minutesToSunset < 30) {
         if (level === 'yes') level = 'caution';
         reasons.push(`Atardecer en ${daylight.minutesToSunset} minutos`);
@@ -1294,7 +1075,7 @@ function addUserMarker(lat, lng) {
         fillColor: '#38bdf8',
         fillOpacity: 1,
         weight: 2
-    }).addTo(map).bindPopup('Tu ubicaci\u00f3n GPS');
+    }).addTo(map).bindPopup('Tu ubicación GPS');
 }
 
 function renderZonesOnMap(restrictions) {
@@ -1340,14 +1121,14 @@ function renderVerdict(verdict) {
 
     let icon, text;
     if (verdict.level === 'yes') {
-        icon = '\u2705';
-        text = '\u00a1Puedes volar!';
+        icon = '✅';
+        text = '¡Puedes volar!';
     } else if (verdict.level === 'caution') {
-        icon = '\u26a0\ufe0f';
-        text = 'Vuela con precauci\u00f3n';
+        icon = '⚠️';
+        text = 'Vuela con precaución';
     } else {
-        icon = '\u274c';
-        text = 'No vueles aqu\u00ed';
+        icon = '❌';
+        text = 'No vueles aquí';
     }
 
     el.innerHTML = `
@@ -1368,7 +1149,7 @@ function renderRestrictions(restrictions) {
                 <div class="restriction-dot green"></div>
                 <div>
                     <div class="restriction-name">Sin restricciones detectadas</div>
-                    <div class="restriction-detail">No se han encontrado zonas restringidas de ENAIRE en esta ubicaci\u00f3n.</div>
+                    <div class="restriction-detail">No se han encontrado zonas restringidas de ENAIRE en esta ubicación.</div>
                 </div>
             </div>
         `;
@@ -1419,8 +1200,8 @@ function renderDaylight(dl) {
         : 'var(--red)';
 
     const statusText = dl.isDaylight
-        ? (dl.minutesToSunset !== null ? `Es de d\u00eda. Faltan ${dl.minutesToSunset} min para el atardecer.` : 'Es de d\u00eda.')
-        : 'Es de noche. Vuelo nocturno requiere autorizaci\u00f3n.';
+        ? (dl.minutesToSunset !== null ? `Es de día. Faltan ${dl.minutesToSunset} min para el atardecer.` : 'Es de día.')
+        : 'Es de noche. Vuelo nocturno requiere autorización.';
 
     content.innerHTML = `
         <div style="font-size:0.9rem;margin-bottom:0.5rem;color:${dl.isDaylight ? 'var(--green)' : 'var(--red)'};font-weight:600;">
@@ -1439,16 +1220,13 @@ function renderDaylight(dl) {
 function renderLocation(lat, lng, accuracy, source) {
     const el = document.getElementById('locationInfo');
     el.style.display = 'flex';
-    let badge = '<span class="location-badge">GPS</span>';
-    if (source === 'manual') {
-        badge = '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
-    } else if (source === 'address') {
-        badge = '<span class="location-badge" style="background:rgba(249,115,22,0.15);color:#f97316;">Direcci\u00f3n</span>';
-    }
-    const accText = accuracy !== null ? `<span style="color:var(--text-muted);font-size:0.75rem;">(precisi\u00f3n: ~${Math.round(accuracy)}m)</span>` : '';
+    const badge = source === 'gps'
+        ? '<span class="location-badge">GPS</span>'
+        : '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+    const accText = accuracy !== null ? `<span style="color:var(--text-muted);font-size:0.75rem;">(precisión: ~${Math.round(accuracy)}m)</span>` : '';
     el.innerHTML = `
         ${badge}
-        <span>Ubicaci\u00f3n: <strong>${lat.toFixed(5)}, ${lng.toFixed(5)}</strong></span>
+        <span>Ubicación: <strong>${lat.toFixed(5)}, ${lng.toFixed(5)}</strong></span>
         ${accText}
     `;
 }
@@ -1543,21 +1321,17 @@ async function queryNearbyZones(lat, lng) {
 // ============================================================
 async function runAnalysis(lat, lng, accuracy, source) {
     isChecking = true;
-    const btn = source === 'gps'
-        ? document.getElementById('refreshBtn')
-        : source === 'address'
-            ? document.getElementById('addressSearchBtn')
-            : document.getElementById('checkHereBtn');
+    const btn = source === 'gps' ? document.getElementById('refreshBtn') : document.getElementById('checkHereBtn');
     btn.disabled = true;
-    btn.textContent = source === 'address' ? 'Analizando...' : 'Analizando...';
+    btn.textContent = 'Analizando...';
 
     // Loading state
     const verdictEl = document.getElementById('verdict');
     verdictEl.className = 'verdict-banner loading';
     verdictEl.innerHTML = `
         <div class="spinner"></div>
-        <div class="verdict-text">Analizando${source === 'manual' ? ' esta ubicaci\u00f3n' : ''}...</div>
-        <div class="verdict-sub">Consultando ENAIRE y meteorolog\u00eda</div>
+        <div class="verdict-text">Analizando${source === 'manual' ? ' esta ubicación' : ''}...</div>
+        <div class="verdict-sub">Consultando ENAIRE y meteorología</div>
     `;
 
     try {
@@ -1596,8 +1370,7 @@ async function runAnalysis(lat, lng, accuracy, source) {
         isChecking = false;
         btn.disabled = false;
         if (source === 'gps') btn.textContent = 'Actualizar';
-        else if (source === 'address') btn.textContent = 'Buscar y comprobar';
-        else btn.textContent = 'Comprobar aqu\u00ed';
+        else btn.textContent = 'Comprobar aquí';
     }
 }
 
@@ -1615,8 +1388,8 @@ async function startCheck() {
     verdictEl.className = 'verdict-banner loading';
     verdictEl.innerHTML = `
         <div class="spinner"></div>
-        <div class="verdict-text">Obteniendo tu ubicaci\u00f3n...</div>
-        <div class="verdict-sub">Esperando se\u00f1al GPS</div>
+        <div class="verdict-text">Obteniendo tu ubicación...</div>
+        <div class="verdict-sub">Esperando señal GPS</div>
     `;
 
     try {
@@ -1641,13 +1414,7 @@ async function startCheck() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const addressInput = document.getElementById('addressInput');
-    addressInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && currentMode === 'address') {
-            event.preventDefault();
-            searchAddress();
-        }
-    });
+    loadProducts();
     startCheck();
 });
 </script>
