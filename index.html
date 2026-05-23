@@ -616,6 +616,54 @@
             white-space: nowrap;
             pointer-events: none;
         }
+
+        /* --- SHARE BUTTON --- */
+        .share-btn {
+            margin-left: auto;
+            padding: 0.3rem 0.7rem;
+            background: rgba(56,189,248,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(56,189,248,0.3);
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .share-btn:hover { background: rgba(56,189,248,0.2); border-color: var(--accent); }
+        .share-btn:active { transform: scale(0.97); }
+        .share-btn.copied { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); }
+
+        /* --- DONATE BLOCK --- */
+        .donate-block {
+            text-align: center;
+            margin: 1.25rem 0 0.5rem;
+        }
+
+        .donate-link {
+            display: inline-block;
+            padding: 0.55rem 1.1rem;
+            background: rgba(255, 213, 79, 0.12);
+            color: #fde68a;
+            border: 1px solid rgba(255, 213, 79, 0.35);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s, transform 0.15s;
+        }
+
+        .donate-link:hover {
+            background: rgba(255, 213, 79, 0.22);
+            border-color: rgba(255, 213, 79, 0.7);
+            transform: translateY(-1px);
+        }
+
+        .donate-link:active { transform: translateY(0); }
     </style>
 </head>
 <body>
@@ -716,12 +764,18 @@
         <p class="affiliate-note">* Enlace de afiliado de Amazon. Gano una peque&ntilde;a comisi&oacute;n sin coste adicional para ti.</p>
     </div>
 
+    <div class="donate-block">
+        <a href="https://www.paypal.com/donate/?hosted_button_id=7Z6JDTBCDCWHC" target="_blank" rel="noopener" class="donate-link">
+            &#x2615; Inv&iacute;tame a un caf&eacute;
+        </a>
+    </div>
+
     <div class="footer">
         Datos de <a href="https://drones.enaire.es" target="_blank" rel="noopener">ENAIRE Drones</a>
         y <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>.
         Esta app es orientativa y no sustituye la consulta oficial.
         <br>Vuela siempre cumpliendo la normativa de <a href="https://www.seguridadaerea.gob.es/es/ambitos/drones" target="_blank" rel="noopener">AESA</a>.
-        <br><span style="opacity:0.4;">v1.1.5</span>
+        <br><span style="opacity:0.4;">v1.2.0</span>
     </div>
 </div>
 
@@ -1244,6 +1298,11 @@ function initMap(lat, lng) {
             updateCoordsDisplay();
         }
     });
+
+    // Keep URL zoom param in sync when user zooms after an analysis
+    map.on('zoomend', () => {
+        if (lastAnalysis) syncUrl(lastAnalysis.lat, lastAnalysis.lng);
+    });
 }
 
 function addUserMarker(lat, lng) {
@@ -1398,16 +1457,25 @@ function renderDaylight(dl) {
 function renderLocation(lat, lng, accuracy, source) {
     const el = document.getElementById('locationInfo');
     el.style.display = 'flex';
-    const badge = source === 'gps'
-        ? '<span class="location-badge">GPS</span>'
-        : source === 'address'
-            ? '<span class="location-badge" style="background:rgba(249,115,22,0.15);color:#f97316;">Dirección</span>'
-            : '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+    let badge;
+    if (source === 'gps') {
+        badge = '<span class="location-badge">GPS</span>';
+    } else if (source === 'address') {
+        badge = '<span class="location-badge" style="background:rgba(249,115,22,0.15);color:#f97316;">Dirección</span>';
+    } else if (source === 'shared') {
+        badge = '<span class="location-badge" style="background:rgba(34,197,94,0.15);color:#22c55e;">Compartido</span>';
+    } else {
+        badge = '<span class="location-badge" style="background:rgba(168,85,247,0.15);color:#a855f7;">Manual</span>';
+    }
     const accText = accuracy !== null ? `<span style="color:var(--text-muted);font-size:0.75rem;">(precisión: ~${Math.round(accuracy)}m)</span>` : '';
     el.innerHTML = `
         ${badge}
         <span>Ubicación: <strong>${lat.toFixed(5)}, ${lng.toFixed(5)}</strong></span>
         ${accText}
+        <button id="shareBtn" class="share-btn" onclick="shareLocation()" title="Compartir esta búsqueda">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Compartir
+        </button>
     `;
 }
 
@@ -1497,6 +1565,70 @@ async function queryNearbyZones(lat, lng) {
 }
 
 // ============================================================
+// URL SYNC + SHARE
+// ============================================================
+let lastAnalysis = null; // { lat, lng } most recent point
+
+function syncUrl(lat, lng) {
+    const zoom = (map && map.getZoom()) || 14;
+    const params = new URLSearchParams();
+    params.set('lat', lat.toFixed(5));
+    params.set('lng', lng.toFixed(5));
+    params.set('z', String(zoom));
+    history.replaceState(null, '', `${location.pathname}?${params.toString()}`);
+}
+
+function buildShareUrl() {
+    if (!lastAnalysis) return location.href;
+    const zoom = (map && map.getZoom()) || 14;
+    const params = new URLSearchParams();
+    params.set('lat', lastAnalysis.lat.toFixed(5));
+    params.set('lng', lastAnalysis.lng.toFixed(5));
+    params.set('z', String(zoom));
+    return `${location.origin}${location.pathname}?${params.toString()}`;
+}
+
+async function shareLocation() {
+    const url = buildShareUrl();
+    const title = 'Can I Drone?';
+    const text = '¿Puedo volar mi dron aquí? Compruébalo:';
+    const btn = document.getElementById('shareBtn');
+
+    if (navigator.share) {
+        try {
+            await navigator.share({ title, text, url });
+            return;
+        } catch (e) {
+            if (e.name === 'AbortError') return; // user cancelled
+        }
+    }
+    try {
+        await navigator.clipboard.writeText(url);
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.classList.add('copied');
+            btn.innerHTML = '✓ Copiado';
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = original;
+            }, 2000);
+        }
+    } catch (e) {
+        prompt('Copia este enlace:', url);
+    }
+}
+
+function readUrlParams() {
+    const params = new URLSearchParams(location.search);
+    const lat = parseFloat(params.get('lat'));
+    const lng = parseFloat(params.get('lng'));
+    const z = parseInt(params.get('z'), 10);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng, zoom: Number.isFinite(z) ? z : 14 };
+}
+
+// ============================================================
 // UNIFIED ANALYSIS (used by both GPS and manual modes)
 // ============================================================
 async function runAnalysis(lat, lng, accuracy, source) {
@@ -1541,6 +1673,9 @@ async function runAnalysis(lat, lng, accuracy, source) {
 
         initMap(lat, lng);
         renderZonesOnMap(restrictions);
+
+        lastAnalysis = { lat, lng };
+        syncUrl(lat, lng);
 
         setTimeout(() => {
             queryNearbyZones(lat, lng);
@@ -1606,7 +1741,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     loadProducts();
-    startCheck();
+
+    const shared = readUrlParams();
+    if (shared) {
+        // Switch UI into manual mode (so the share point is visible/movable)
+        // but mark the source as 'shared' for the badge.
+        setMode('manual');
+        initMap(shared.lat, shared.lng);
+        map.setView([shared.lat, shared.lng], shared.zoom);
+        runAnalysis(shared.lat, shared.lng, null, 'shared');
+    } else {
+        startCheck();
+    }
 });
 </script>
 
