@@ -2,7 +2,7 @@
 
 Comprueba al instante si puedes volar tu dron en España. Restricciones de espacio aéreo de [ENAIRE](https://drones.enaire.es) en tiempo real, meteorología de [Open-Meteo](https://open-meteo.com) y estado de luz solar — todo en una sola pantalla.
 
-**Live:** [canidrone.f1madrid.win](https://canidrone.f1madrid.win)
+**Live:** [canidrone.ojoalprecio.com](https://canidrone.ojoalprecio.com)
 
 ## Qué hace
 
@@ -48,7 +48,7 @@ docker compose up -d
 
 La app estará disponible en:
 - Local: `http://<ip-raspberry>:8090`
-- Pública: `https://canidrone.f1madrid.win` (vía Cloudflare Tunnel)
+- Pública: `https://canidrone.ojoalprecio.com` (vía Cloudflare Tunnel)
 
 > **Nota**: La geolocalización GPS requiere HTTPS. Solo funciona a través de la URL de Cloudflare Tunnel, no vía HTTP plano.
 
